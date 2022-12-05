@@ -1,5 +1,6 @@
 library(Rcpp)
 library(RcppArmadillo)
+sourceCpp("functions3.cpp")
 
 # formula = Y ~ X1
 # formula = outcome ~ tx
