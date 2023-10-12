@@ -1,3 +1,5 @@
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins(cpp11)]]  
 #include <iostream>
 #include <RcppArmadillo.h>
 #include <math.h>
@@ -8,8 +10,6 @@
 #include <RcppArmadilloExtensions/sample.h>
 using namespace std;
 using namespace Rcpp;
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(cpp11)]]  
 
 //Sugar function for seq()
 //[[Rcpp::export]]
