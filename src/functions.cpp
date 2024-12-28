@@ -28,11 +28,11 @@ arma::uvec Seq(int first, int last) {
 //Sugar function for pmin()
 //[[Rcpp::export]]
 arma::colvec mypmin(arma::colvec vec1, arma::colvec vec2) {
-  int n = vec1.n_rows;
+  unsigned n = vec1.n_rows;
   if(n != vec2.n_rows) return 0;
   else {
     arma::colvec out(n);
-    for(int i = 0; i < n; i++) {
+    for(unsigned i = 0; i < n; i++) {
       out[i] = min(vec1[i], vec2[i]);
     }
     return out;
@@ -303,7 +303,7 @@ List cluster_characteristics(arma::mat clusterid) {
 List hierarchical_sampling(List I_idx, 
                            arma::colvec batch,
                            bool replace,
-                           bool swcrt) {
+                           bool tscs) {
   int b = batch.n_rows;                //b = 3 implies 3-level, for example
   List I_idx_sub;                      //To hold nested list of indices for subsample
   List return_list(4);                 //Return: subindices, inital # of 1st-order clusters
@@ -323,7 +323,7 @@ List hierarchical_sampling(List I_idx,
   int I_full = I_idx.size();
   arma::colvec J_full(I_S);
   
-  if (!swcrt) {
+  if (!tscs) {
     if (b == 2){                                       //Sampling at 2nd level
       for(int i = 0; i < I_idx_sub.size(); i++) {
         arma::colvec J_idx = I_idx_sub[i];
@@ -831,7 +831,7 @@ List gaussian_hier_sandwich(arma::colvec beta, double phi, arma::colvec rho, arm
 //Computes each iteration of Fisher scoring / Newton-Raphson
 //Also return each individual summand comprising Hessian / gradient for use in sandwich estimator
 //[[Rcpp::export]]
-List binomial_SWCRT_solver(arma::colvec beta, 
+List binomial_tscs_solver(arma::colvec beta, 
                            arma::colvec rho, 
                            arma::colvec outcome,
                            arma::mat design_mat,
@@ -945,7 +945,7 @@ List binomial_SWCRT_solver(arma::colvec beta,
 //Computes each iteration of Fisher scoring / Newton-Raphson
 //Also return each individual summand comprising Hessian / gradient for use in sandwich estimator
 //[[Rcpp::export]]
-List gaussian_SWCRT_solver(arma::colvec beta, 
+List gaussian_tscs_solver(arma::colvec beta, 
                            double phi, arma::colvec rho, 
                            arma::colvec outcome,
                            arma::mat design_mat,
@@ -1065,7 +1065,7 @@ List gaussian_SWCRT_solver(arma::colvec beta,
 }
 
 //[[Rcpp::export]]
-List binomial_SWCRT_sandwich(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome,
+List binomial_tscs_sandwich(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome,
                              arma::mat design_mat, List I_idx) {
   
   arma::colvec mu = 1/(1+exp(-design_mat*beta));    //Mean vector
@@ -1139,7 +1139,7 @@ List binomial_SWCRT_sandwich(arma::colvec beta, double phi, arma::colvec rho, ar
 }
 
 //[[Rcpp::export]]
-List gaussian_SWCRT_sandwich(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome,
+List gaussian_tscs_sandwich(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome,
                              arma::mat design_mat, List I_idx) {
   
   arma::colvec mu = design_mat*beta;                //Mean vector
@@ -1211,7 +1211,8 @@ List gaussian_SWCRT_sandwich(arma::colvec beta, double phi, arma::colvec rho, ar
 }
 
 //[[Rcpp::export]]
-List stochastic_binomial_hier_solver(arma::colvec beta, double phi, arma::colvec rho,
+List stochastic_binomial_hier_solver(arma::colvec beta, 
+                                     arma::colvec rho,
                                      arma::colvec outcome, 
                                      arma::mat design_mat,
                                      List I_idx,               //Indices for sub-cluster
@@ -1223,7 +1224,7 @@ List stochastic_binomial_hier_solver(arma::colvec beta, double phi, arma::colvec
   arma::colvec mu = 1/(1+exp(-design_mat*beta));    //Mean vector
   double rho0 = 1 - rho[0];                       //Remaining ICC; appears in many computations
   arma::colvec resid = outcome - mu;                //Residual vector
-  arma::colvec U = phi*mu%(1-mu);                   //Variance vector
+  arma::colvec U = mu%(1-mu);                   //Variance vector
   arma::colvec U_sqrt = sqrt(U);                    //Std Dev vector
   arma::colvec std_resid = resid/U_sqrt;            //Standardized residuals (used in hierarchical portion)
   
@@ -1233,8 +1234,6 @@ List stochastic_binomial_hier_solver(arma::colvec beta, double phi, arma::colvec
   
   arma::cube H1(p, p, I, arma::fill::zeros);        //Separated Hessian for mean effects
   arma::cube G1(p, 1, I, arma::fill::zeros);        //Separated gradient for mean effects
-  arma::cube H1_5(1, 1, I, arma::fill::zeros);      //Separated Hessian for dispersion
-  arma::cube G1_5(1, 1, I, arma::fill::zeros);      //Separated gradient for dispersion
   arma::cube H2(q, q, I, arma::fill::zeros);        //Separated Hessian for association
   arma::cube G2(q, 1, I, arma::fill::zeros);        //Separated gradient for association
   
@@ -1272,7 +1271,7 @@ List stochastic_binomial_hier_solver(arma::colvec beta, double phi, arma::colvec
       arma::colvec v = myrep(vij, J_sub);
       double c = 1/(1/rho[1] + sum(vij%Kij));
       
-      arma::mat Xtilde = design_mat.rows(idx_val, idx_val + Kidot - 1); Xtilde.each_col() %= U_sqrt.rows(idx_val, idx_val + Kidot - 1)/phi;
+      arma::mat Xtilde = design_mat.rows(idx_val, idx_val + Kidot - 1); Xtilde.each_col() %= U_sqrt.rows(idx_val, idx_val + Kidot - 1);
       arma::colvec Etilde = std_resid.rows(idx_val, idx_val + Kidot - 1);
       arma::mat Xtildev = Xtilde.each_col()%v;
       arma::colvec Etildev = Etilde%v;
@@ -1318,15 +1317,13 @@ List stochastic_binomial_hier_solver(arma::colvec beta, double phi, arma::colvec
         H1temp += m32*temp_vec_v_X;
         
         //Now for dispersion
-        a = IJK*phi*sum(square(temp_vec_E) - 1);
-        G1_5(0,0,i) += a;
-        H1_5(0,0,i) += IJK*J_sub[j];
+        a = IJK*sum(square(temp_vec_E) - 1);
         
         //Now for Hessian
         double temp_double_E = sum(temp_vec_E);
         a0 = IJK*K_minus_1*(pow(temp_double_E, 2) - sum(temp_vec_E % temp_vec_E))/2;
         G2(0,0,i) += a0 - IJK*K_minus_1*J_sub[j]*(J_sub[j]-1)/2*rho[0];
-        G2(1,0,i) -= ((a/(IJK*phi) + J_sub[j])/2 + a0/(IJK*K_minus_1))*IJK*J_minus_1_K;
+        G2(1,0,i) -= ((a/(IJK) + J_sub[j])/2 + a0/(IJK*K_minus_1))*IJK*J_minus_1_K;
         
         double inner_idx_length1 = IJK*K_minus_1*J_sub[j]*(J_sub[j]-1)/2;
         
@@ -1357,7 +1354,7 @@ List stochastic_binomial_hier_solver(arma::colvec beta, double phi, arma::colvec
       double Ji = I_idx_sub.n_elem;
       
       //Precomputed values which appear many times in computation; see paper
-      arma::mat Xtilde = design_mat.rows(idx_val, idx_val + Ji - 1); Xtilde.each_col() %= U_sqrt.rows(idx_val, idx_val + Ji - 1)/phi;
+      arma::mat Xtilde = design_mat.rows(idx_val, idx_val + Ji - 1); Xtilde.each_col() %= U_sqrt.rows(idx_val, idx_val + Ji - 1);
       arma::colvec Etilde = std_resid.rows(idx_val, idx_val + Ji - 1);
       
       arma::rowvec Xtilde_sum = colSums(Xtilde);
@@ -1369,10 +1366,6 @@ List stochastic_binomial_hier_solver(arma::colvec beta, double phi, arma::colvec
       G1.slice(i) += const1*Xtilde.t()*Etilde - const2*Xtilde_sum.t()*Etilde_sum;
       H1.slice(i) += const1*Xtilde.t()*Xtilde - const2*Xtilde_sum.t()*Xtilde_sum;
       
-      //Now for Hessians/gradients of dispersion
-      arma::colvec std_resid_subvec = std_resid.rows(idx_val, idx_val + Ji - 1);
-      G1_5(0,0,i) = (I_full*J_full[i])/(I*Ji)*phi*sum(square(std_resid_subvec) - 1);
-      H1_5(0,0,i) = (I_full*J_full[i])/I;
       
       //Now for Hessians/gradients of association parameters
       G2(0,0,i) = (I_full*J_full[i]*(J_full[i]-1))/(I*Ji*(Ji-1))*((pow(Etilde_sum, 2) - sum(Etilde % Etilde))/2 - Ji*(Ji-1)/2*rho[0]);
@@ -1388,8 +1381,6 @@ List stochastic_binomial_hier_solver(arma::colvec beta, double phi, arma::colvec
   
   return List::create(Rcpp::Named("G1") = G1,
                       Rcpp::Named("H1") = H1,
-                      Rcpp::Named("G1_5") = G1_5,
-                      Rcpp::Named("H1_5") = H1_5,
                       Rcpp::Named("G2") = G2,
                       Rcpp::Named("H2") = H2
   );
@@ -1581,7 +1572,8 @@ List stochastic_gaussian_hier_solver(arma::colvec beta, double phi, arma::colvec
 }
 
 //[[Rcpp::export]]
-List stochastic_binomial_SWCRT_solver(arma::colvec beta, double phi, arma::colvec rho,
+List stochastic_binomial_tscs_solver(arma::colvec beta, 
+                                      arma::colvec rho,
                                       arma::colvec outcome, 
                                       arma::mat design_mat,
                                       List I_idx,               //Indices for sub-cluster
@@ -1592,7 +1584,7 @@ List stochastic_binomial_SWCRT_solver(arma::colvec beta, double phi, arma::colve
   
   arma::colvec mu = 1/(1+exp(-design_mat*beta));    //Mean vector
   arma::colvec resid = outcome - mu;                //Residual vector
-  arma::colvec U = phi*mu%(1-mu);                       //Variance vector
+  arma::colvec U = mu%(1-mu);                       //Variance vector
   arma::colvec U_sqrt = sqrt(U);                    //Std Dev vector
   arma::colvec std_resid = resid/U_sqrt;            //Standardized residuals (used in hierarchical portion)
   
@@ -1619,8 +1611,6 @@ List stochastic_binomial_SWCRT_solver(arma::colvec beta, double phi, arma::colve
   
   arma::cube H1(p, p, I, arma::fill::zeros);        //Separated Hessian for mean effects
   arma::cube G1(p, 1, I, arma::fill::zeros);        //Separated gradient for mean effects
-  arma::cube H1_5(1, 1, I, arma::fill::zeros);      //Separated Hessian for dispersion
-  arma::cube G1_5(1, 1, I, arma::fill::zeros);      //Separated gradient for dispersion
   arma::cube H2(q, q, I, arma::fill::zeros);        //Separated Hessian for association
   arma::cube G2(q, 1, I, arma::fill::zeros);        //Separated gradient for association
   
@@ -1651,7 +1641,7 @@ List stochastic_binomial_SWCRT_solver(arma::colvec beta, double phi, arma::colve
     c3_tilde = c3*IK*K_minus_1;
     c4_tilde = c4*IK*K_minus_1;
     
-    arma::mat Xtilde = design_mat.rows(idx_val, idx_val + TJi - 1); Xtilde.each_col() %= U_sqrt.rows(idx_val, idx_val + TJi - 1)/phi;
+    arma::mat Xtilde = design_mat.rows(idx_val, idx_val + TJi - 1); Xtilde.each_col() %= U_sqrt.rows(idx_val, idx_val + TJi - 1);
     arma::colvec Etilde = std_resid.rows(idx_val, idx_val + TJi - 1);
     
     arma::rowvec Xtilde_sum = colSums(Xtilde);
@@ -1684,8 +1674,6 @@ List stochastic_binomial_SWCRT_solver(arma::colvec beta, double phi, arma::colve
       
       //Now for Hessians/gradients of dispersion
       resid_phi = IK*sum(square(temp_vec_E));
-      G1_5(0,0,i) += phi*(resid_phi - IK*J_sub[j]);
-      H1_5(0,0,i) += IK*J_sub[j];
       
       //Now for Hessians/gradients of association parameters
       resid2_0 = (pow(temp_double_E, 2) - resid_phi/IK)/2;         //All e_ij*e_ij' for individuals in cluster
@@ -1702,9 +1690,6 @@ List stochastic_binomial_SWCRT_solver(arma::colvec beta, double phi, arma::colve
     G1.slice(i) += c1_tilde*Xtilde.t()*Etilde - c2_tilde*Xtilde_sub.t()*Etilde_sub + c4_tilde*Xtilde_sum.t()*Etilde_sum;
     H1.slice(i) += c1_tilde*Xtilde.t()*Xtilde - c2_tilde*Xtilde_sub.t()*Xtilde_sub + c4_tilde*Xtilde_sum.t()*Xtilde_sum;
     
-    //Now for Hessians/gradients of dispersion
-    G1_5(0,0,i) = IK*phi*sum(square(Etilde) - 1);
-    H1_5(0,0,i) = IK*TJi;
     
     
     //Now for Hessians/gradients of ICC
@@ -1729,15 +1714,15 @@ List stochastic_binomial_SWCRT_solver(arma::colvec beta, double phi, arma::colve
   
   return List::create(Rcpp::Named("G1") = G1,
                       Rcpp::Named("H1") = H1,
-                      Rcpp::Named("G1_5") = G1_5,
-                      Rcpp::Named("H1_5") = H1_5,
                       Rcpp::Named("G2") = G2,
                       Rcpp::Named("H2") = H2
   );
 }
 
 //[[Rcpp::export]]
-List stochastic_gaussian_SWCRT_solver(arma::colvec beta, double phi, arma::colvec rho,
+List stochastic_gaussian_tscs_solver(arma::colvec beta, 
+                                      double phi, 
+                                      arma::colvec rho,
                                       arma::colvec outcome, 
                                       arma::mat design_mat,
                                       List I_idx,               //Indices for sub-cluster
@@ -1899,7 +1884,7 @@ arma::mat meat_computation(arma::cube G,
                            arma::cube H, 
                            arma::mat Info,
                            string se_adjust) {
-  int d = G.n_rows;
+  double d = G.n_rows;
   int I = G.n_slices;
   arma::mat G_outersum(d, d, arma::fill::zeros);
   
@@ -2075,10 +2060,10 @@ List NewRaph(arma::colvec beta,
       }
       BDE = gaussian_hier_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
     }
-  } else if (design == "stepped-wedge") {
+  } else if (design == "tscs") {
     if (family == "binomial") {
       //Initial iteration for beta coefficients for stability
-      HG_output = binomial_SWCRT_solver(beta, 
+      HG_output = binomial_tscs_solver(beta, 
                                         rho, 
                                         outcome, 
                                         design_mat,  
@@ -2093,7 +2078,7 @@ List NewRaph(arma::colvec beta,
       beta += change1;
       while (err > tol){
         iter += 1;
-        HG_output = binomial_SWCRT_solver(beta, 
+        HG_output = binomial_tscs_solver(beta, 
                                           rho, 
                                           outcome, 
                                           design_mat, 
@@ -2120,10 +2105,10 @@ List NewRaph(arma::colvec beta,
           err += 2*sum(abs(change2)/(abs(rho)+0.001 + abs(abs(rho)-0.001)));
         }
       }
-      BDE = binomial_SWCRT_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
+      BDE = binomial_tscs_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
     } else if (family == "gaussian") {
       //Initial iteration for beta coefficients for stability
-      HG_output = gaussian_SWCRT_solver(beta, 
+      HG_output = gaussian_tscs_solver(beta, 
                                         phi, 
                                         rho, 
                                         outcome, 
@@ -2139,7 +2124,7 @@ List NewRaph(arma::colvec beta,
       beta += change1;
       while (err > tol){
         iter += 1;
-        HG_output = gaussian_SWCRT_solver(beta, 
+        HG_output = gaussian_tscs_solver(beta, 
                                           phi, 
                                           rho, 
                                           outcome, 
@@ -2175,7 +2160,7 @@ List NewRaph(arma::colvec beta,
           err += 2*sum(abs(change2)/(abs(rho)+0.001 + abs(abs(rho)-0.001)));
         }
       }
-      BDE = gaussian_SWCRT_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
+      BDE = gaussian_tscs_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
     }
   }
   
@@ -2191,20 +2176,36 @@ List NewRaph(arma::colvec beta,
     G.tube(0, 0, p-1, 0) = G1;
     G.tube(p, 0, p+q-1, 0) = G2;
     
-    arma::mat H_sum = sum(H, 2);
-    arma::mat Info = H_sum.i();
-    arma::mat G_outersum = meat_computation(G, H, Info, se_adjust);
+    if (corstr == "independence") { 
+      arma::mat H_sum = sum(H.tube(0, 0, p-1, p-1), 2);
+      arma::mat Info = H_sum.i();
+      arma::mat G_outersum = meat_computation(G.tube(0, 0, p-1, 0), H.tube(0, 0, p-1, p-1), Info, se_adjust); 
+      return List::create(Rcpp::Named("beta") = beta,
+                          Rcpp::Named("rho") = rho,
+                          Rcpp::Named("Info1") = Info1,
+                          Rcpp::Named("Info2") = Info2,
+                          Rcpp::Named("Info") = Info,
+                          Rcpp::Named("G_outersum") = G_outersum,
+                          Rcpp::Named("var_sandwich") = Info*G_outersum*Info.t(),
+                          Rcpp::Named("iter") = iter
+      );  
+    } else {
+      arma::mat H_sum = sum(H, 2);
+      arma::mat Info = H_sum.i();
+      arma::mat G_outersum = meat_computation(G, H, Info, se_adjust);
+      return List::create(Rcpp::Named("beta") = beta,
+                          Rcpp::Named("rho") = rho,
+                          Rcpp::Named("Info1") = Info1,
+                          Rcpp::Named("Info2") = Info2,
+                          Rcpp::Named("Info") = Info,
+                          Rcpp::Named("G_outersum") = G_outersum,
+                          Rcpp::Named("var_sandwich") = Info*G_outersum*Info.t(),
+                          Rcpp::Named("iter") = iter
+      );  
+    }
     
-    return List::create(Rcpp::Named("beta") = beta,
-                        Rcpp::Named("rho") = rho,
-                        Rcpp::Named("Info1") = Info1,
-                        Rcpp::Named("Info2") = Info2,
-                        Rcpp::Named("Info") = Info,
-                        Rcpp::Named("G_outersum") = G_outersum,
-                        Rcpp::Named("var_sandwich") = Info*G_outersum*Info.t(),
-                        Rcpp::Named("iter") = iter
-    );  
-  } else if (family == "gaussian") {
+  } else {
+    //else if (family == "gaussian") {
     arma::cube H(p+q+1, p+q+1, I, arma::fill::zeros);
     H.tube(0, 0, p-1, p-1) = H1;
     H.tube(p, 0, p, p-1) = as<arma::cube>( BDE["B"]); 
@@ -2218,24 +2219,38 @@ List NewRaph(arma::colvec beta,
     G.tube(p, 0, p, 0) = G1_5;
     G.tube(p+1, 0, p+q, 0) = G2;
     
-    arma::mat H_sum = sum(H, 2);
-    arma::mat Info = H_sum.i();
-    arma::mat G_outersum = meat_computation(G, H, Info, se_adjust);
+    if (corstr == "independence") { 
+      arma::mat H_sum = sum(H.tube(0, 0, p, p), 2);
+      arma::mat Info = H_sum.i();
+      arma::mat G_outersum = meat_computation(G.tube(0, 0, p, 0), H.tube(0, 0, p, p), Info, se_adjust); 
+      return List::create(Rcpp::Named("beta") = beta,
+                          Rcpp::Named("phi") = phi,
+                          Rcpp::Named("rho") = rho,
+                          Rcpp::Named("Info1") = Info1,
+                          Rcpp::Named("Info1_5") = Info1_5,
+                          Rcpp::Named("Info2") = Info2,
+                          Rcpp::Named("Info") = Info,
+                          Rcpp::Named("G_outersum") = G_outersum,
+                          Rcpp::Named("var_sandwich") = Info*G_outersum*Info.t(),
+                          Rcpp::Named("iter") = iter
+      );  
+    } else {
+      arma::mat H_sum = sum(H, 2);
+      arma::mat Info = H_sum.i();
+      arma::mat G_outersum = meat_computation(G, H, Info, se_adjust);
+      return List::create(Rcpp::Named("beta") = beta,
+                          Rcpp::Named("phi") = phi,
+                          Rcpp::Named("rho") = rho,
+                          Rcpp::Named("Info1") = Info1,
+                          Rcpp::Named("Info1_5") = Info1_5,
+                          Rcpp::Named("Info2") = Info2,
+                          Rcpp::Named("Info") = Info,
+                          Rcpp::Named("G_outersum") = G_outersum,
+                          Rcpp::Named("var_sandwich") = Info*G_outersum*Info.t(),
+                          Rcpp::Named("iter") = iter
+      );  
+    }
     
-    return List::create(Rcpp::Named("beta") = beta,
-                        Rcpp::Named("phi") = phi,
-                        Rcpp::Named("rho") = rho,
-                        Rcpp::Named("Info1") = Info1,
-                        Rcpp::Named("Info1_5") = Info1_5,
-                        Rcpp::Named("Info2") = Info2,
-                        Rcpp::Named("Info") = Info,
-                        //Rcpp::Named("G1") = G1,
-                        //Rcpp::Named("G1_5") = G1_5,
-                        //Rcpp::Named("G2") = G2,
-                        Rcpp::Named("G_outersum") = G_outersum,
-                        Rcpp::Named("var_sandwich") = Info*G_outersum*Info.t(),
-                        Rcpp::Named("iter") = iter
-    );  
   }
 }
 
@@ -2292,7 +2307,8 @@ List StochNewRaph(arma::colvec beta,
     if (family == "binomial") {
       //Initial iteration for stability
       List subsample = hierarchical_sampling(I_idx, batch_size, false, false);
-      HG_output = stochastic_binomial_hier_solver(beta, phi, rho,
+      HG_output = stochastic_binomial_hier_solver(beta, 
+                                                  rho,
                                                   outcome.rows(as<arma::uvec>(subsample[4])-1),    //Subsample of outcomes
                                                   design_mat.rows(as<arma::uvec>(subsample[4])-1), //Subsample of covariates
                                                   subsample[0],                                    //Indices for subsample
@@ -2311,7 +2327,7 @@ List StochNewRaph(arma::colvec beta,
       //Burn-in iterations///////////////////////////////////////////////////////////////////////////////////////////
       for(int iter = 1; iter < burnin; iter++){                                        //Stochastic iterations
         List subsample = hierarchical_sampling(I_idx, batch_size, false, false);
-        HG_output = stochastic_binomial_hier_solver(beta, phi, rho,
+        HG_output = stochastic_binomial_hier_solver(beta, rho,
                                                     outcome.rows(as<arma::uvec>(subsample[4])-1),    //Subsample of outcomes
                                                     design_mat.rows(as<arma::uvec>(subsample[4])-1), //Subsample of covariates
                                                     subsample[0],                                    //Indices for subsample
@@ -2327,14 +2343,6 @@ List StochNewRaph(arma::colvec beta,
         change1 = Info1*G1_sum;
         beta += change1/pow(iter+1,0.51);                                               //Iterations with learning rates
         
-        H1_5 = as<arma::cube>(HG_output["H1_5"]);
-        H1_5_sum = sum(H1_5, 2);
-        Info1_5 = H1_5_sum.i();
-        G1_5 = as<arma::cube>(HG_output["G1_5"]);
-        G1_5_sum = sum(G1_5, 2);
-        change1_5 = Info1_5*G1_5_sum;
-        phi += change1_5[0]/pow(iter+1,0.51);                                           //Iterations with learning rates
-        
         if (corstr == "exchangeable") {
           H2 = as<arma::cube>(HG_output["H2"]);
           H2_sum = sum(H2, 2);
@@ -2349,12 +2357,11 @@ List StochNewRaph(arma::colvec beta,
       
       //Averaging iterations///////////////////////////////////////////////////////////////////////////////////////////
       arma::colvec beta_avg(p, arma::fill::zeros);
-      double phi_avg = 0;
       arma::colvec rho_avg(q, arma::fill::zeros);
       
       for(int iter = burnin; iter < burnin + avgiter; iter++){                         //Averaged SGD, including for Hessians and gradients
         List subsample = hierarchical_sampling(I_idx, batch_size, false, false);
-        HG_output = stochastic_binomial_hier_solver(beta, phi, rho,
+        HG_output = stochastic_binomial_hier_solver(beta, rho,
                                                     outcome.rows(as<arma::uvec>(subsample[4])-1),
                                                     design_mat.rows(as<arma::uvec>(subsample[4])-1),
                                                     subsample[0],
@@ -2363,28 +2370,14 @@ List StochNewRaph(arma::colvec beta,
                                                                                subsample[3]);
         
         H1 = as<arma::cube>(HG_output["H1"]);
-        //H1_avg += H1;
         H1_sum = sum(H1, 2);
         Info1 = H1_sum.i();
         
         G1 = as<arma::cube>(HG_output["G1"]);
-        //G1_avg += G1;
         G1_sum = sum(G1, 2);
         change1 = Info1*G1_sum;
         beta += change1/pow(iter+1,0.51);                                               //Iterations with learning rates
         beta_avg += beta;
-        
-        H1_5 = as<arma::cube>(HG_output["H1_5"]);
-        //H1_5_avg += H1_5;
-        H1_5_sum = sum(H1_5, 2);
-        Info1_5 = H1_5_sum.i();
-        
-        G1_5 = as<arma::cube>(HG_output["G1_5"]);
-        //G1_5_avg += G1_5;
-        G1_5_sum = sum(G1_5, 2);
-        change1_5 = Info1_5*G1_5_sum;
-        phi += change1_5[0]/pow(iter+1,0.51);                                           //Iterations with learning rates
-        phi_avg += phi;
         
         if (corstr == "exchangeable") {
           H2 = as<arma::cube>(HG_output["H2"]);
@@ -2402,7 +2395,6 @@ List StochNewRaph(arma::colvec beta,
         //Rcout << iter << "\n";
       }
       beta = beta_avg/avgiter;
-      phi = phi_avg/avgiter;
       rho = rho_avg/avgiter;
       
       //One final deterministic iteration for sandwich estimator (meat of sandwich under stochastic is too difficult to derive)//////////////////////////
@@ -2420,14 +2412,6 @@ List StochNewRaph(arma::colvec beta,
       G1_sum = sum(G1, 2);
       change1 = Info1*G1_sum;
       beta += change1;
-      
-      H1_5 = as<arma::cube>(HG_output["H1_5"]);
-      H1_5_sum = sum(H1_5, 2);
-      Info1_5 = H1_5_sum.i();
-      G1_5 = as<arma::cube>(HG_output["G1_5"]);
-      G1_5_sum = sum(G1_5, 2);
-      change1_5 = Info1_5*G1_5_sum;
-      phi += change1_5[0];
       
       if (corstr == "exchangeable") {
         H2 = as<arma::cube>(HG_output["H2"]);
@@ -2596,12 +2580,12 @@ List StochNewRaph(arma::colvec beta,
       //Sandwich (must be deterministic)////////////////////////////////////////////////////////////////////////////////////////////////
       BDE = gaussian_hier_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
     }
-  }  else if (design == "stepped-wedge") {
+  }  else if (design == "tscs") {
     if (family == "binomial") {
       //Initial iteration for stability
       List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
       
-      HG_output = stochastic_binomial_SWCRT_solver(beta, phi, rho,
+      HG_output = stochastic_binomial_tscs_solver(beta, rho,
                                                    outcome.rows(as<arma::uvec>(subsample[4])-1),
                                                    design_mat.rows(as<arma::uvec>(subsample[4])-1),
                                                    subsample[0],
@@ -2620,7 +2604,8 @@ List StochNewRaph(arma::colvec beta,
       //Burn-in iterations///////////////////////////////////////////////////////////////////////////////////////////
       for(int iter = 1; iter < burnin; iter++){                                        //Stochastic iterations
         List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
-        HG_output = stochastic_binomial_SWCRT_solver(beta, phi, rho,
+        HG_output = stochastic_binomial_tscs_solver(beta, 
+                                                     rho,
                                                      outcome.rows(as<arma::uvec>(subsample[4])-1),    //Subsample of outcomes
                                                      design_mat.rows(as<arma::uvec>(subsample[4])-1), //Subsample of covariates
                                                      subsample[0],                                    //Indices for subsample
@@ -2636,14 +2621,6 @@ List StochNewRaph(arma::colvec beta,
         change1 = Info1*G1_sum;
         beta += change1/pow(iter+1,0.51);                                               //Iterations with learning rates
         
-        H1_5 = as<arma::cube>(HG_output["H1_5"]);
-        H1_5_sum = sum(H1_5, 2);
-        Info1_5 = H1_5_sum.i();
-        G1_5 = as<arma::cube>(HG_output["G1_5"]);
-        G1_5_sum = sum(G1_5, 2);
-        change1_5 = Info1_5*G1_5_sum;
-        phi += change1_5[0]/pow(iter+1,0.51);                                           //Iterations with learning rates
-        
         if (corstr == "exchangeable") {
           H2 = as<arma::cube>(HG_output["H2"]);
           H2_sum = sum(H2, 2);
@@ -2658,12 +2635,12 @@ List StochNewRaph(arma::colvec beta,
       
       //Averaging iterations///////////////////////////////////////////////////////////////////////////////////////////
       arma::colvec beta_avg(p, arma::fill::zeros);
-      double phi_avg = 0;
       arma::colvec rho_avg(q, arma::fill::zeros);
       
       for(int iter = burnin; iter < burnin + avgiter; iter++){                         //Averaged SGD, including for Hessians and gradients
         List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
-        HG_output = stochastic_binomial_SWCRT_solver(beta, phi, rho,
+        HG_output = stochastic_binomial_tscs_solver(beta,
+                                                     rho,
                                                      outcome.rows(as<arma::uvec>(subsample[4])-1),
                                                      design_mat.rows(as<arma::uvec>(subsample[4])-1),
                                                      subsample[0],
@@ -2672,37 +2649,21 @@ List StochNewRaph(arma::colvec beta,
                                                                                 subsample[3]);
         
         H1 = as<arma::cube>(HG_output["H1"]);
-        //H1_avg += H1;
         H1_sum = sum(H1, 2);
         Info1 = H1_sum.i();
         
         G1 = as<arma::cube>(HG_output["G1"]);
-        //G1_avg += G1;
         G1_sum = sum(G1, 2);
         change1 = Info1*G1_sum;
         beta += change1/pow(iter+1,0.51);                                               //Iterations with learning rates
         beta_avg += beta;
         
-        H1_5 = as<arma::cube>(HG_output["H1_5"]);
-        //H1_5_avg += H1_5;
-        H1_5_sum = sum(H1_5, 2);
-        Info1_5 = H1_5_sum.i();
-        
-        G1_5 = as<arma::cube>(HG_output["G1_5"]);
-        //G1_5_avg += G1_5;
-        G1_5_sum = sum(G1_5, 2);
-        change1_5 = Info1_5*G1_5_sum;
-        phi += change1_5[0]/pow(iter+1,0.51);                                           //Iterations with learning rates
-        phi_avg += phi;
-        
         if (corstr == "exchangeable") {
           H2 = as<arma::cube>(HG_output["H2"]);
-          //H2_avg += H2;
           H2_sum = sum(H2, 2);
           Info2 = H2_sum.i();
           
           G2 = as<arma::cube>(HG_output["G2"]);
-          //G2_avg += G2;
           G2_sum = sum(G2, 2);
           change2 = Info2*G2_sum;
           rho += change2/pow(iter+1,0.51);                                             //Iterations with learning rates
@@ -2711,11 +2672,10 @@ List StochNewRaph(arma::colvec beta,
       }
       
       beta = beta_avg/avgiter;
-      phi = phi_avg/avgiter;
       rho = rho_avg/avgiter;
       
       //One final deterministic iteration for sandwich estimator (meat of sandwich under stochastic is too difficult to derive)//////////////////////////
-      HG_output = binomial_SWCRT_solver(beta, 
+      HG_output = binomial_tscs_solver(beta, 
                                         rho, 
                                         outcome, 
                                         design_mat, 
@@ -2730,14 +2690,6 @@ List StochNewRaph(arma::colvec beta,
       change1 = Info1*G1_sum;
       beta += change1;
       
-      H1_5 = as<arma::cube>(HG_output["H1_5"]);
-      H1_5_sum = sum(H1_5, 2);
-      Info1_5 = H1_5_sum.i();
-      G1_5 = as<arma::cube>(HG_output["G1_5"]);
-      G1_5_sum = sum(G1_5, 2);
-      change1_5 = Info1_5*G1_5_sum;
-      phi += change1_5[0];
-      
       if (corstr == "exchangeable") {
         H2 = as<arma::cube>(HG_output["H2"]);
         H2_sum = sum(H2, 2);
@@ -2749,13 +2701,13 @@ List StochNewRaph(arma::colvec beta,
       }
       
       //Sandwich (must be deterministic)////////////////////////////////////////////////////////////////////////////////////////////////
-      BDE = binomial_SWCRT_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
+      BDE = binomial_tscs_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
       
     } else if (family == "gaussian") {
       //Initial iteration for stability
       List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
       
-      HG_output = stochastic_gaussian_SWCRT_solver(beta, phi, rho,
+      HG_output = stochastic_gaussian_tscs_solver(beta, phi, rho,
                                                    outcome.rows(as<arma::uvec>(subsample[4])-1),
                                                    design_mat.rows(as<arma::uvec>(subsample[4])-1),
                                                    subsample[0],
@@ -2774,7 +2726,7 @@ List StochNewRaph(arma::colvec beta,
       //Burn-in iterations///////////////////////////////////////////////////////////////////////////////////////////
       for(int iter = 1; iter < burnin; iter++){                                        //Stochastic iterations
         List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
-        HG_output = stochastic_gaussian_SWCRT_solver(beta, phi, rho,
+        HG_output = stochastic_gaussian_tscs_solver(beta, phi, rho,
                                                      outcome.rows(as<arma::uvec>(subsample[4])-1),    //Subsample of outcomes
                                                      design_mat.rows(as<arma::uvec>(subsample[4])-1), //Subsample of covariates
                                                      subsample[0],                                    //Indices for subsample
@@ -2817,7 +2769,7 @@ List StochNewRaph(arma::colvec beta,
       
       for(int iter = burnin; iter < burnin + avgiter; iter++){                         //Averaged SGD, including for Hessians and gradients
         List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
-        HG_output = stochastic_gaussian_SWCRT_solver(beta, phi, rho,
+        HG_output = stochastic_gaussian_tscs_solver(beta, phi, rho,
                                                      outcome.rows(as<arma::uvec>(subsample[4])-1),
                                                      design_mat.rows(as<arma::uvec>(subsample[4])-1),
                                                      subsample[0],
@@ -2869,7 +2821,7 @@ List StochNewRaph(arma::colvec beta,
       rho = rho_avg/avgiter;
       
       //One final deterministic iteration for sandwich estimator (meat of sandwich under stochastic is too difficult to derive)//////////////////////////
-      HG_output = gaussian_SWCRT_solver(beta, 
+      HG_output = gaussian_tscs_solver(beta, 
                                         phi, 
                                         rho, 
                                         outcome, 
@@ -2904,7 +2856,7 @@ List StochNewRaph(arma::colvec beta,
       }
       
       //Sandwich (must be deterministic)////////////////////////////////////////////////////////////////////////////////////////////////
-      BDE = gaussian_SWCRT_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
+      BDE = gaussian_tscs_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
     }
   }
   
@@ -2921,21 +2873,33 @@ List StochNewRaph(arma::colvec beta,
   G.tube(p, 0, p, 0) = G1_5;
   G.tube(p+1, 0, p+q, 0) = G2;
   
-  arma::mat H_sum = sum(H, 2);
-  arma::mat Info = H_sum.i();
-  arma::mat G_outersum = meat_computation(G, H, Info, se_adjust);
-  
-  return List::create(Rcpp::Named("beta") = beta,
-                      Rcpp::Named("phi") = phi,
-                      Rcpp::Named("rho") = rho,
-                      Rcpp::Named("Info1") = Info1,
-                      Rcpp::Named("Info1_5") = Info1_5,
-                      Rcpp::Named("Info2") = Info2,
-                      Rcpp::Named("Info") = Info,
-                      //Rcpp::Named("G1") = G1,
-                      //Rcpp::Named("G1_5") = G1_5,
-                      //Rcpp::Named("G2") = G2,
-                      Rcpp::Named("G_outersum") = G_outersum,
-                      Rcpp::Named("var_sandwich") = Info*G_outersum*Info.t()
-  );
+  if (corstr == "independence") { 
+    arma::mat H_sum = sum(H.tube(0, 0, p, p), 2);
+    arma::mat Info = H_sum.i();
+    arma::mat G_outersum = meat_computation(G.tube(0, 0, p, 0), H.tube(0, 0, p, p), Info, se_adjust); 
+    return List::create(Rcpp::Named("beta") = beta,
+                        Rcpp::Named("phi") = phi,
+                        Rcpp::Named("rho") = rho,
+                        Rcpp::Named("Info1") = Info1,
+                        Rcpp::Named("Info1_5") = Info1_5,
+                        Rcpp::Named("Info2") = Info2,
+                        Rcpp::Named("Info") = Info,
+                        Rcpp::Named("G_outersum") = G_outersum,
+                        Rcpp::Named("var_sandwich") = Info*G_outersum*Info.t()
+    );  
+  } else {
+    arma::mat H_sum = sum(H, 2);
+    arma::mat Info = H_sum.i();
+    arma::mat G_outersum = meat_computation(G, H, Info, se_adjust);
+    return List::create(Rcpp::Named("beta") = beta,
+                        Rcpp::Named("phi") = phi,
+                        Rcpp::Named("rho") = rho,
+                        Rcpp::Named("Info1") = Info1,
+                        Rcpp::Named("Info1_5") = Info1_5,
+                        Rcpp::Named("Info2") = Info2,
+                        Rcpp::Named("Info") = Info,
+                        Rcpp::Named("G_outersum") = G_outersum,
+                        Rcpp::Named("var_sandwich") = Info*G_outersum*Info.t()
+    );  
+  }
 }
