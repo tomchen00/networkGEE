@@ -303,7 +303,7 @@ List cluster_characteristics(arma::mat clusterid) {
 List hierarchical_sampling(List I_idx,
                            arma::colvec batch,
                            bool replace,
-                           bool swcrt) {
+                           bool tscs) {
   int b = batch.n_rows;                //b = 3 implies 3-level, for example
   List I_idx_sub;                      //To hold nested list of indices for subsample
   List return_list(4);                 //Return: subindices, inital # of 1st-order clusters
@@ -323,7 +323,7 @@ List hierarchical_sampling(List I_idx,
   int I_full = I_idx.size();
   arma::colvec J_full(I_S);
 
-  if (!swcrt) {
+  if (!tscs) {
     if (b == 2){                                       //Sampling at 2nd level
       for(int i = 0; i < I_idx_sub.size(); i++) {
         arma::colvec J_idx = I_idx_sub[i];
@@ -831,7 +831,7 @@ List gaussian_hier_sandwich(arma::colvec beta, double phi, arma::colvec rho, arm
 //Computes each iteration of Fisher scoring / Newton-Raphson
 //Also return each individual summand comprising Hessian / gradient for use in sandwich estimator
 //[[Rcpp::export]]
-List binomial_SWCRT_solver(arma::colvec beta,
+List binomial_tscs_solver(arma::colvec beta,
                            arma::colvec rho,
                            arma::colvec outcome,
                            arma::mat design_mat,
@@ -945,7 +945,7 @@ List binomial_SWCRT_solver(arma::colvec beta,
 //Computes each iteration of Fisher scoring / Newton-Raphson
 //Also return each individual summand comprising Hessian / gradient for use in sandwich estimator
 //[[Rcpp::export]]
-List gaussian_SWCRT_solver(arma::colvec beta,
+List gaussian_tscs_solver(arma::colvec beta,
                            double phi, arma::colvec rho,
                            arma::colvec outcome,
                            arma::mat design_mat,
@@ -1065,7 +1065,7 @@ List gaussian_SWCRT_solver(arma::colvec beta,
 }
 
 //[[Rcpp::export]]
-List binomial_SWCRT_sandwich(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome,
+List binomial_tscs_sandwich(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome,
                              arma::mat design_mat, List I_idx) {
 
   arma::colvec mu = 1/(1+exp(-design_mat*beta));    //Mean vector
@@ -1139,7 +1139,7 @@ List binomial_SWCRT_sandwich(arma::colvec beta, double phi, arma::colvec rho, ar
 }
 
 //[[Rcpp::export]]
-List gaussian_SWCRT_sandwich(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome,
+List gaussian_tscs_sandwich(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome,
                              arma::mat design_mat, List I_idx) {
 
   arma::colvec mu = design_mat*beta;                //Mean vector
@@ -1572,7 +1572,7 @@ List stochastic_gaussian_hier_solver(arma::colvec beta, double phi, arma::colvec
 }
 
 //[[Rcpp::export]]
-List stochastic_binomial_SWCRT_solver(arma::colvec beta,
+List stochastic_binomial_tscs_solver(arma::colvec beta,
                                       arma::colvec rho,
                                       arma::colvec outcome,
                                       arma::mat design_mat,
@@ -1720,7 +1720,7 @@ List stochastic_binomial_SWCRT_solver(arma::colvec beta,
 }
 
 //[[Rcpp::export]]
-List stochastic_gaussian_SWCRT_solver(arma::colvec beta,
+List stochastic_gaussian_tscs_solver(arma::colvec beta,
                                       double phi,
                                       arma::colvec rho,
                                       arma::colvec outcome,
@@ -2060,10 +2060,10 @@ List NewRaph(arma::colvec beta,
       }
       BDE = gaussian_hier_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
     }
-  } else if (design == "stepped-wedge") {
+  } else if (design == "tscs") {
     if (family == "binomial") {
       //Initial iteration for beta coefficients for stability
-      HG_output = binomial_SWCRT_solver(beta,
+      HG_output = binomial_tscs_solver(beta,
                                         rho,
                                         outcome,
                                         design_mat,
@@ -2078,7 +2078,7 @@ List NewRaph(arma::colvec beta,
       beta += change1;
       while (err > tol){
         iter += 1;
-        HG_output = binomial_SWCRT_solver(beta,
+        HG_output = binomial_tscs_solver(beta,
                                           rho,
                                           outcome,
                                           design_mat,
@@ -2105,10 +2105,10 @@ List NewRaph(arma::colvec beta,
           err += 2*sum(abs(change2)/(abs(rho)+0.001 + abs(abs(rho)-0.001)));
         }
       }
-      BDE = binomial_SWCRT_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
+      BDE = binomial_tscs_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
     } else if (family == "gaussian") {
       //Initial iteration for beta coefficients for stability
-      HG_output = gaussian_SWCRT_solver(beta,
+      HG_output = gaussian_tscs_solver(beta,
                                         phi,
                                         rho,
                                         outcome,
@@ -2124,7 +2124,7 @@ List NewRaph(arma::colvec beta,
       beta += change1;
       while (err > tol){
         iter += 1;
-        HG_output = gaussian_SWCRT_solver(beta,
+        HG_output = gaussian_tscs_solver(beta,
                                           phi,
                                           rho,
                                           outcome,
@@ -2160,7 +2160,7 @@ List NewRaph(arma::colvec beta,
           err += 2*sum(abs(change2)/(abs(rho)+0.001 + abs(abs(rho)-0.001)));
         }
       }
-      BDE = gaussian_SWCRT_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
+      BDE = gaussian_tscs_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
     }
   }
 
@@ -2580,12 +2580,12 @@ List StochNewRaph(arma::colvec beta,
       //Sandwich (must be deterministic)////////////////////////////////////////////////////////////////////////////////////////////////
       BDE = gaussian_hier_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
     }
-  }  else if (design == "stepped-wedge") {
+  }  else if (design == "tscs") {
     if (family == "binomial") {
       //Initial iteration for stability
       List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
 
-      HG_output = stochastic_binomial_SWCRT_solver(beta, rho,
+      HG_output = stochastic_binomial_tscs_solver(beta, rho,
                                                    outcome.rows(as<arma::uvec>(subsample[4])-1),
                                                    design_mat.rows(as<arma::uvec>(subsample[4])-1),
                                                    subsample[0],
@@ -2604,7 +2604,7 @@ List StochNewRaph(arma::colvec beta,
       //Burn-in iterations///////////////////////////////////////////////////////////////////////////////////////////
       for(int iter = 1; iter < burnin; iter++){                                        //Stochastic iterations
         List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
-        HG_output = stochastic_binomial_SWCRT_solver(beta,
+        HG_output = stochastic_binomial_tscs_solver(beta,
                                                      rho,
                                                      outcome.rows(as<arma::uvec>(subsample[4])-1),    //Subsample of outcomes
                                                      design_mat.rows(as<arma::uvec>(subsample[4])-1), //Subsample of covariates
@@ -2639,7 +2639,7 @@ List StochNewRaph(arma::colvec beta,
 
       for(int iter = burnin; iter < burnin + avgiter; iter++){                         //Averaged SGD, including for Hessians and gradients
         List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
-        HG_output = stochastic_binomial_SWCRT_solver(beta,
+        HG_output = stochastic_binomial_tscs_solver(beta,
                                                      rho,
                                                      outcome.rows(as<arma::uvec>(subsample[4])-1),
                                                      design_mat.rows(as<arma::uvec>(subsample[4])-1),
@@ -2675,7 +2675,7 @@ List StochNewRaph(arma::colvec beta,
       rho = rho_avg/avgiter;
 
       //One final deterministic iteration for sandwich estimator (meat of sandwich under stochastic is too difficult to derive)//////////////////////////
-      HG_output = binomial_SWCRT_solver(beta,
+      HG_output = binomial_tscs_solver(beta,
                                         rho,
                                         outcome,
                                         design_mat,
@@ -2701,13 +2701,13 @@ List StochNewRaph(arma::colvec beta,
       }
 
       //Sandwich (must be deterministic)////////////////////////////////////////////////////////////////////////////////////////////////
-      BDE = binomial_SWCRT_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
+      BDE = binomial_tscs_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
 
     } else if (family == "gaussian") {
       //Initial iteration for stability
       List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
 
-      HG_output = stochastic_gaussian_SWCRT_solver(beta, phi, rho,
+      HG_output = stochastic_gaussian_tscs_solver(beta, phi, rho,
                                                    outcome.rows(as<arma::uvec>(subsample[4])-1),
                                                    design_mat.rows(as<arma::uvec>(subsample[4])-1),
                                                    subsample[0],
@@ -2726,7 +2726,7 @@ List StochNewRaph(arma::colvec beta,
       //Burn-in iterations///////////////////////////////////////////////////////////////////////////////////////////
       for(int iter = 1; iter < burnin; iter++){                                        //Stochastic iterations
         List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
-        HG_output = stochastic_gaussian_SWCRT_solver(beta, phi, rho,
+        HG_output = stochastic_gaussian_tscs_solver(beta, phi, rho,
                                                      outcome.rows(as<arma::uvec>(subsample[4])-1),    //Subsample of outcomes
                                                      design_mat.rows(as<arma::uvec>(subsample[4])-1), //Subsample of covariates
                                                      subsample[0],                                    //Indices for subsample
@@ -2769,7 +2769,7 @@ List StochNewRaph(arma::colvec beta,
 
       for(int iter = burnin; iter < burnin + avgiter; iter++){                         //Averaged SGD, including for Hessians and gradients
         List subsample = hierarchical_sampling(I_idx, batch_size, false, true);
-        HG_output = stochastic_gaussian_SWCRT_solver(beta, phi, rho,
+        HG_output = stochastic_gaussian_tscs_solver(beta, phi, rho,
                                                      outcome.rows(as<arma::uvec>(subsample[4])-1),
                                                      design_mat.rows(as<arma::uvec>(subsample[4])-1),
                                                      subsample[0],
@@ -2821,7 +2821,7 @@ List StochNewRaph(arma::colvec beta,
       rho = rho_avg/avgiter;
 
       //One final deterministic iteration for sandwich estimator (meat of sandwich under stochastic is too difficult to derive)//////////////////////////
-      HG_output = gaussian_SWCRT_solver(beta,
+      HG_output = gaussian_tscs_solver(beta,
                                         phi,
                                         rho,
                                         outcome,
@@ -2856,7 +2856,7 @@ List StochNewRaph(arma::colvec beta,
       }
 
       //Sandwich (must be deterministic)////////////////////////////////////////////////////////////////////////////////////////////////
-      BDE = gaussian_SWCRT_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
+      BDE = gaussian_tscs_sandwich(beta, phi, rho, outcome, design_mat, I_idx);
     }
   }
 
