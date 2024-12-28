@@ -28,7 +28,7 @@ hgee = function(formula,
   #A bunch of checks to ensure inputs are valid
   if (!(family %in% c("binomial","gaussian"))) {stop("family not recognized")}
   if (!(corstr %in% c("independence", "exchangeable"))) {stop("corstr not recognized")}
-  if (!(design %in% c("hierarchical", "stepped-wedge"))) {stop("design not recognized")}
+  if (!(design %in% c("hierarchical", "tscs"))) {stop("design not recognized")}
   if (!(optim %in% c("deterministic", "stochastic"))) {stop("optim not recognized")}
 
   outcome = unlist(dat[all.vars(formula)[1]])              #Outcome
@@ -45,7 +45,7 @@ hgee = function(formula,
     levels_num = length(id)                        #Number of levels
     rho = numeric(levels_num)                      #Association parameters
 
-  } else if (design == "stepped-wedge") {  #(cluster, period) column order for clusterid
+  } else if (design == "tscs") {  #(cluster, period) column order for clusterid
 
     formula_fixed = as.formula(paste(all.vars(formula)[1], paste(-1, all.vars(formula)[2], paste("factor(", id[2], ")"), sep = " + "), sep = " ~ "))
     design_mat = model.matrix(formula_fixed, dat)
