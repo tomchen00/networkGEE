@@ -198,22 +198,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// binomial_hier_solver
-List binomial_hier_solver(arma::colvec beta, arma::colvec rho, arma::colvec outcome, arma::mat design_mat, arma::mat Info1, List I_idx);
-RcppExport SEXP _networkGEE_binomial_hier_solver(SEXP betaSEXP, SEXP rhoSEXP, SEXP outcomeSEXP, SEXP design_matSEXP, SEXP Info1SEXP, SEXP I_idxSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::colvec >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< arma::colvec >::type rho(rhoSEXP);
-    Rcpp::traits::input_parameter< arma::colvec >::type outcome(outcomeSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type design_mat(design_matSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Info1(Info1SEXP);
-    Rcpp::traits::input_parameter< List >::type I_idx(I_idxSEXP);
-    rcpp_result_gen = Rcpp::wrap(binomial_hier_solver(beta, rho, outcome, design_mat, Info1, I_idx));
-    return rcpp_result_gen;
-END_RCPP
-}
 // gaussian_hier_solver
 List gaussian_hier_solver(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome, arma::mat design_mat, arma::mat Info1, List I_idx);
 RcppExport SEXP _networkGEE_gaussian_hier_solver(SEXP betaSEXP, SEXP phiSEXP, SEXP rhoSEXP, SEXP outcomeSEXP, SEXP design_matSEXP, SEXP Info1SEXP, SEXP I_idxSEXP) {
@@ -402,7 +386,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // meat_computation
-arma::mat meat_computation(arma::cube G, arma::cube H, arma::mat Info, std::string se_adjust);
+arma::mat meat_computation(arma::cube G, arma::cube H, arma::mat Info, string se_adjust);
 RcppExport SEXP _networkGEE_meat_computation(SEXP GSEXP, SEXP HSEXP, SEXP InfoSEXP, SEXP se_adjustSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -410,14 +394,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::cube >::type G(GSEXP);
     Rcpp::traits::input_parameter< arma::cube >::type H(HSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type Info(InfoSEXP);
-    Rcpp::traits::input_parameter< std::string >::type se_adjust(se_adjustSEXP);
+    Rcpp::traits::input_parameter< string >::type se_adjust(se_adjustSEXP);
     rcpp_result_gen = Rcpp::wrap(meat_computation(G, H, Info, se_adjust));
     return rcpp_result_gen;
 END_RCPP
 }
 // NewRaph
-List NewRaph(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome, arma::mat design_mat, arma::mat clusterid, std::string family, std::string corstr, std::string design, std::string se_adjust, double tol);
-RcppExport SEXP _networkGEE_NewRaph(SEXP betaSEXP, SEXP phiSEXP, SEXP rhoSEXP, SEXP outcomeSEXP, SEXP design_matSEXP, SEXP clusteridSEXP, SEXP familySEXP, SEXP corstrSEXP, SEXP designSEXP, SEXP se_adjustSEXP, SEXP tolSEXP) {
+List NewRaph(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome, arma::mat design_mat, arma::mat clusterid, string family, string corstr, string se_adjust, double tol);
+RcppExport SEXP _networkGEE_NewRaph(SEXP betaSEXP, SEXP phiSEXP, SEXP rhoSEXP, SEXP outcomeSEXP, SEXP design_matSEXP, SEXP clusteridSEXP, SEXP familySEXP, SEXP corstrSEXP, SEXP se_adjustSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -427,18 +411,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type outcome(outcomeSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type design_mat(design_matSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type clusterid(clusteridSEXP);
-    Rcpp::traits::input_parameter< std::string >::type family(familySEXP);
-    Rcpp::traits::input_parameter< std::string >::type corstr(corstrSEXP);
-    Rcpp::traits::input_parameter< std::string >::type design(designSEXP);
-    Rcpp::traits::input_parameter< std::string >::type se_adjust(se_adjustSEXP);
+    Rcpp::traits::input_parameter< string >::type family(familySEXP);
+    Rcpp::traits::input_parameter< string >::type corstr(corstrSEXP);
+    Rcpp::traits::input_parameter< string >::type se_adjust(se_adjustSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(NewRaph(beta, phi, rho, outcome, design_mat, clusterid, family, corstr, design, se_adjust, tol));
+    rcpp_result_gen = Rcpp::wrap(NewRaph(beta, phi, rho, outcome, design_mat, clusterid, family, corstr, se_adjust, tol));
     return rcpp_result_gen;
 END_RCPP
 }
 // StochNewRaph
-List StochNewRaph(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome, arma::mat design_mat, arma::mat clusterid, std::string family, std::string corstr, std::string design, std::string se_adjust, arma::colvec batch_size, int burnin, int avgiter);
-RcppExport SEXP _networkGEE_StochNewRaph(SEXP betaSEXP, SEXP phiSEXP, SEXP rhoSEXP, SEXP outcomeSEXP, SEXP design_matSEXP, SEXP clusteridSEXP, SEXP familySEXP, SEXP corstrSEXP, SEXP designSEXP, SEXP se_adjustSEXP, SEXP batch_sizeSEXP, SEXP burninSEXP, SEXP avgiterSEXP) {
+List StochNewRaph(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome, arma::mat design_mat, arma::mat clusterid, string family, string corstr, string se_adjust, arma::colvec batch_size, int burnin, int avgiter);
+RcppExport SEXP _networkGEE_StochNewRaph(SEXP betaSEXP, SEXP phiSEXP, SEXP rhoSEXP, SEXP outcomeSEXP, SEXP design_matSEXP, SEXP clusteridSEXP, SEXP familySEXP, SEXP corstrSEXP, SEXP se_adjustSEXP, SEXP batch_sizeSEXP, SEXP burninSEXP, SEXP avgiterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -448,14 +431,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type outcome(outcomeSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type design_mat(design_matSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type clusterid(clusteridSEXP);
-    Rcpp::traits::input_parameter< std::string >::type family(familySEXP);
-    Rcpp::traits::input_parameter< std::string >::type corstr(corstrSEXP);
-    Rcpp::traits::input_parameter< std::string >::type design(designSEXP);
-    Rcpp::traits::input_parameter< std::string >::type se_adjust(se_adjustSEXP);
+    Rcpp::traits::input_parameter< string >::type family(familySEXP);
+    Rcpp::traits::input_parameter< string >::type corstr(corstrSEXP);
+    Rcpp::traits::input_parameter< string >::type se_adjust(se_adjustSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type batch_size(batch_sizeSEXP);
     Rcpp::traits::input_parameter< int >::type burnin(burninSEXP);
     Rcpp::traits::input_parameter< int >::type avgiter(avgiterSEXP);
-    rcpp_result_gen = Rcpp::wrap(StochNewRaph(beta, phi, rho, outcome, design_mat, clusterid, family, corstr, design, se_adjust, batch_size, burnin, avgiter));
+    rcpp_result_gen = Rcpp::wrap(StochNewRaph(beta, phi, rho, outcome, design_mat, clusterid, family, corstr, se_adjust, batch_size, burnin, avgiter));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -477,7 +459,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_networkGEE_hierarchical_sampling", (DL_FUNC) &_networkGEE_hierarchical_sampling, 4},
     {"_networkGEE_rcpp_lengths_recursive", (DL_FUNC) &_networkGEE_rcpp_lengths_recursive, 1},
     {"_networkGEE_rcpp_lengths", (DL_FUNC) &_networkGEE_rcpp_lengths, 1},
-    {"_networkGEE_binomial_hier_solver", (DL_FUNC) &_networkGEE_binomial_hier_solver, 6},
     {"_networkGEE_gaussian_hier_solver", (DL_FUNC) &_networkGEE_gaussian_hier_solver, 7},
     {"_networkGEE_binomial_hier_sandwich", (DL_FUNC) &_networkGEE_binomial_hier_sandwich, 5},
     {"_networkGEE_gaussian_hier_sandwich", (DL_FUNC) &_networkGEE_gaussian_hier_sandwich, 6},
@@ -490,8 +471,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_networkGEE_stochastic_binomial_tscs_solver", (DL_FUNC) &_networkGEE_stochastic_binomial_tscs_solver, 8},
     {"_networkGEE_stochastic_gaussian_tscs_solver", (DL_FUNC) &_networkGEE_stochastic_gaussian_tscs_solver, 9},
     {"_networkGEE_meat_computation", (DL_FUNC) &_networkGEE_meat_computation, 4},
-    {"_networkGEE_NewRaph", (DL_FUNC) &_networkGEE_NewRaph, 11},
-    {"_networkGEE_StochNewRaph", (DL_FUNC) &_networkGEE_StochNewRaph, 13},
+    {"_networkGEE_NewRaph", (DL_FUNC) &_networkGEE_NewRaph, 10},
+    {"_networkGEE_StochNewRaph", (DL_FUNC) &_networkGEE_StochNewRaph, 12},
     {NULL, NULL, 0}
 };
 

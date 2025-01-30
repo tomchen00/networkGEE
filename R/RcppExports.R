@@ -65,10 +65,6 @@ rcpp_lengths <- function(lst) {
     .Call(`_networkGEE_rcpp_lengths`, lst)
 }
 
-binomial_hier_solver <- function(beta, rho, outcome, design_mat, Info1, I_idx) {
-    .Call(`_networkGEE_binomial_hier_solver`, beta, rho, outcome, design_mat, Info1, I_idx)
-}
-
 gaussian_hier_solver <- function(beta, phi, rho, outcome, design_mat, Info1, I_idx) {
     .Call(`_networkGEE_gaussian_hier_solver`, beta, phi, rho, outcome, design_mat, Info1, I_idx)
 }
@@ -117,11 +113,11 @@ meat_computation <- function(G, H, Info, se_adjust) {
     .Call(`_networkGEE_meat_computation`, G, H, Info, se_adjust)
 }
 
-NewRaph <- function(beta, phi, rho, outcome, design_mat, clusterid, family, corstr, design, se_adjust, tol) {
-    .Call(`_networkGEE_NewRaph`, beta, phi, rho, outcome, design_mat, clusterid, family, corstr, design, se_adjust, tol)
+NewRaph <- function(beta, phi, rho, outcome, design_mat, clusterid, family, corstr, se_adjust, tol) {
+    .Call(`_networkGEE_NewRaph`, beta, phi, rho, outcome, design_mat, clusterid, family, corstr, se_adjust, tol)
 }
 
-StochNewRaph <- function(beta, phi, rho, outcome, design_mat, clusterid, family, corstr, design, se_adjust, batch_size, burnin, avgiter) {
-    .Call(`_networkGEE_StochNewRaph`, beta, phi, rho, outcome, design_mat, clusterid, family, corstr, design, se_adjust, batch_size, burnin, avgiter)
+StochNewRaph <- function(beta, phi, rho, outcome, design_mat, clusterid, family, corstr, se_adjust, batch_size, burnin, avgiter) {
+    .Call(`_networkGEE_StochNewRaph`, beta, phi, rho, outcome, design_mat, clusterid, family, corstr, se_adjust, batch_size, burnin, avgiter)
 }
 
