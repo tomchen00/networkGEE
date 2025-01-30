@@ -5,9 +5,9 @@
 # id = c("cluster", "period")
 # link = "logit"
 # family = "gaussian"
-# corstr = "exchangeable"
-# design = "hierarchical"
-# design = "step-wedge"
+# corstr = "independence"
+# corstr = "nested-exchangeable"
+# corstr = "block-exchangeable"
 # optim = "stochastic"
 # tol = 1e-6
 # batch_size = NULL
@@ -17,45 +17,34 @@ hgee = function(formula,
                 dat,
                 family = "gaussian",
                 corstr = "independence",
-                design = "hierarchical",
                 se_adjust = "unadjusted",
                 optim = "deterministic",
                 batch_size = c(30, 5, 2),
-                burnin = 25,
-                avgiter = 25,
+                burnin = 50,
+                avgiter = 50,
                 tol = 1e-6) {
-
+  
   #A bunch of checks to ensure inputs are valid
   if (!(family %in% c("binomial","gaussian"))) {stop("family not recognized")}
-  if (!(corstr %in% c("independence", "exchangeable"))) {stop("corstr not recognized")}
-  if (!(design %in% c("hierarchical", "tscs"))) {stop("design not recognized")}
+  if (!(corstr %in% c("independence", "nested-exchangeable", "block-exchangeable"))) {stop("corstr not recognized")}
   if (!(optim %in% c("deterministic", "stochastic"))) {stop("optim not recognized")}
-
-  outcome = unlist(dat[all.vars(formula)[1]])              #Outcome
-  clusterid = as.matrix(dat[id])                           #Cluster ids (levels for hierarchical, (cluster, period) for step-wedge)
+  
+  mf <- model.frame(formula = as.formula(formula), data = dat)
+  outcome = model.response(mf)                             #Outcome
+  clusterid = as.matrix(dat[id])                           #Cluster ids [levels for nested-exchangeable, (cluster, period) for block-exchangeable]
   phi = 1                                                  #Dispersion parameter (variance of errors in continuous model)
-
-  #Following if statement is initializing
-  #   Design (hierarchical vs step-wedge)
-  #   Cluster levels, if hierarchical
-  if (design == "hierarchical") {
-
-    design_mat = model.matrix(formula, dat)      #Design matrix
-    beta = cbind(numeric(ncol(design_mat)))        #Linear coefficients
-    levels_num = length(id)                        #Number of levels
-    rho = numeric(levels_num)                      #Association parameters
-
-  } else if (design == "tscs") {  #(cluster, period) column order for clusterid
-
-    formula_fixed = as.formula(paste(all.vars(formula)[1], paste(-1, all.vars(formula)[2], paste("factor(", id[2], ")"), sep = " + "), sep = " ~ "))
-    design_mat = model.matrix(formula_fixed, dat)
-    beta = numeric(ncol(design_mat))
+  
+  if (corstr == "nested-exchangeable") {
+    levels_num = length(id)                        
+  } else if (corstr == "block-exchangeable") {  #(cluster, period) column order for clusterid
     levels_num = 3
-    rho = numeric(levels_num)
-
   }
-
-
+  
+  design_mat = model.matrix(attr(mf, "terms"), data = mf)        #Design matrix
+  beta = cbind(numeric(ncol(design_mat)))                        #Linear coefficients
+  rho = numeric(levels_num)                                      #Exchangeable correlation coefficients
+  
+  
   ###########################
   #Newton-Raphson iterations#
   ###########################
@@ -69,7 +58,6 @@ hgee = function(formula,
                             family,
                             #link,
                             corstr,
-                            design,
                             se_adjust,
                             tol)
   } else if (optim == "stochastic") {
@@ -82,13 +70,12 @@ hgee = function(formula,
                                  family,
                                  #link,
                                  corstr,
-                                 design,
                                  se_adjust,
                                  batch_size[1:(levels_num+1)],
                                  burnin,
                                  avgiter)
   }
-
+  
   #################
   #Standard errors#
   #################
@@ -101,7 +88,7 @@ hgee = function(formula,
   #                      nrow = length(beta)+length(rho)+1, ncol = length(beta)+length(rho)+1)
   var_sandwich = solver_output$var_sandwich
   se_sandwich = sqrt(diag(var_sandwich))
-
+  
   if (family == "binomial") {
     return(list(beta = solver_output$beta,
                 rho = solver_output$rho,
