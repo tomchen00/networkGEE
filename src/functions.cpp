@@ -1884,7 +1884,7 @@ List stochastic_gaussian_tscs_solver(arma::colvec beta,
 arma::mat meat_computation(arma::cube G,
                            arma::cube H,
                            arma::mat Info,
-                           string se_adjust) {
+                           std::string se_adjust) {
   double d = G.n_rows;
   int I = G.n_slices;
   arma::mat G_outersum(d, d, arma::fill::zeros);
@@ -1915,9 +1915,9 @@ List NewRaph(arma::colvec beta,
              arma::colvec outcome,
              arma::mat design_mat,
              arma::mat clusterid,
-             string family, //string link,
-             string corstr,
-             string se_adjust,
+             std::string family, //std::string link,
+             std::string corstr,
+             std::string se_adjust,
              double tol) {
 
   List I_idx = cluster_characteristics(clusterid);
@@ -2309,9 +2309,9 @@ List StochNewRaph(arma::colvec beta,
                   arma::colvec outcome,
                   arma::mat design_mat,
                   arma::mat clusterid,
-                  string family, //string link,
-                  string corstr,
-                  string se_adjust,
+                  std::string family, //std::string link,
+                  std::string corstr,
+                  std::string se_adjust,
                   arma::colvec batch_size,
                   int burnin,
                   int avgiter) {

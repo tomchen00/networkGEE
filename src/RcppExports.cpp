@@ -387,7 +387,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // meat_computation
-arma::mat meat_computation(arma::cube G, arma::cube H, arma::mat Info, string se_adjust);
+arma::mat meat_computation(arma::cube G, arma::cube H, arma::mat Info, std::string se_adjust);
 RcppExport SEXP _networkGEE_meat_computation(SEXP GSEXP, SEXP HSEXP, SEXP InfoSEXP, SEXP se_adjustSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -395,13 +395,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::cube >::type G(GSEXP);
     Rcpp::traits::input_parameter< arma::cube >::type H(HSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type Info(InfoSEXP);
-    Rcpp::traits::input_parameter< string >::type se_adjust(se_adjustSEXP);
+    Rcpp::traits::input_parameter< std::string >::type se_adjust(se_adjustSEXP);
     rcpp_result_gen = Rcpp::wrap(meat_computation(G, H, Info, se_adjust));
     return rcpp_result_gen;
 END_RCPP
 }
 // NewRaph
-List NewRaph(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome, arma::mat design_mat, arma::mat clusterid, string family, string corstr, string se_adjust, double tol);
+List NewRaph(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome, arma::mat design_mat, arma::mat clusterid, std::string family, std::string corstr, std::string se_adjust, double tol);
 RcppExport SEXP _networkGEE_NewRaph(SEXP betaSEXP, SEXP phiSEXP, SEXP rhoSEXP, SEXP outcomeSEXP, SEXP design_matSEXP, SEXP clusteridSEXP, SEXP familySEXP, SEXP corstrSEXP, SEXP se_adjustSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -412,16 +412,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type outcome(outcomeSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type design_mat(design_matSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type clusterid(clusteridSEXP);
-    Rcpp::traits::input_parameter< string >::type family(familySEXP);
-    Rcpp::traits::input_parameter< string >::type corstr(corstrSEXP);
-    Rcpp::traits::input_parameter< string >::type se_adjust(se_adjustSEXP);
+    Rcpp::traits::input_parameter< std::string >::type family(familySEXP);
+    Rcpp::traits::input_parameter< std::string >::type corstr(corstrSEXP);
+    Rcpp::traits::input_parameter< std::string >::type se_adjust(se_adjustSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     rcpp_result_gen = Rcpp::wrap(NewRaph(beta, phi, rho, outcome, design_mat, clusterid, family, corstr, se_adjust, tol));
     return rcpp_result_gen;
 END_RCPP
 }
 // StochNewRaph
-List StochNewRaph(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome, arma::mat design_mat, arma::mat clusterid, string family, string corstr, string se_adjust, arma::colvec batch_size, int burnin, int avgiter);
+List StochNewRaph(arma::colvec beta, double phi, arma::colvec rho, arma::colvec outcome, arma::mat design_mat, arma::mat clusterid, std::string family, std::string corstr, std::string se_adjust, arma::colvec batch_size, int burnin, int avgiter);
 RcppExport SEXP _networkGEE_StochNewRaph(SEXP betaSEXP, SEXP phiSEXP, SEXP rhoSEXP, SEXP outcomeSEXP, SEXP design_matSEXP, SEXP clusteridSEXP, SEXP familySEXP, SEXP corstrSEXP, SEXP se_adjustSEXP, SEXP batch_sizeSEXP, SEXP burninSEXP, SEXP avgiterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -432,9 +432,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::colvec >::type outcome(outcomeSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type design_mat(design_matSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type clusterid(clusteridSEXP);
-    Rcpp::traits::input_parameter< string >::type family(familySEXP);
-    Rcpp::traits::input_parameter< string >::type corstr(corstrSEXP);
-    Rcpp::traits::input_parameter< string >::type se_adjust(se_adjustSEXP);
+    Rcpp::traits::input_parameter< std::string >::type family(familySEXP);
+    Rcpp::traits::input_parameter< std::string >::type corstr(corstrSEXP);
+    Rcpp::traits::input_parameter< std::string >::type se_adjust(se_adjustSEXP);
     Rcpp::traits::input_parameter< arma::colvec >::type batch_size(batch_sizeSEXP);
     Rcpp::traits::input_parameter< int >::type burnin(burninSEXP);
     Rcpp::traits::input_parameter< int >::type avgiter(avgiterSEXP);
