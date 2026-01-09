@@ -1,0 +1,289 @@
+---
+title: "networkGEE"
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit README.Rmd -->
+
+**networkGEE** implements scalable generalized estimating equations (GEE) for 
+multi-level clustered and network-correlated data structures that are not supported by classical GEE software.
+
+The package supports:
+
+- Standard 2-level exchangeable GEE (with `corstr = "nested-exchangeable"` and `id = "cluster-id"`)
+- Extended 3-level exchangeable GEE (with `corstr = "nested-exchangeable"` and `id = c("outer-cluster-id", "inner-cluster-id")`)
+- Block-exchangeable GEE (with `corstr = "block-exchangeable"` and `id = c("cluster", "period")`)
+- Deterministic (`optim = "deterministic"`) and stochastic optimization (`optim = "stochastic"`) backends
+- Unadjusted (`se_adjust = "unadjusted"`) and Fay–Graubard (`se_adjust = "FG"`) standard errors
+
+See Chen et al. (2025) for full methodological details.
+
+
+## Installation
+
+```{r eval=FALSE}
+# install.packages("devtools")
+devtools::install_github("tomchen00/networkGEE")
+library(networkGEE)
+```
+
+```{r setup, include=FALSE}
+library(networkGEE)
+```
+
+## Model Formulation and Examples
+
+Let $Y_{ij}$ denote outcomes with marginal mean
+$$
+\begin{aligned}
+\mu_{ij} = g^{-1}(\mathbf{X}_{ij} \boldsymbol{\beta})
+\end{aligned}
+$$
+and working covariance
+$$
+\begin{aligned}
+\text{Var}(\mathbf{Y}_i) = \mathbf{A}_i^{1/2} \mathbf{R}_i(\boldsymbol{\alpha}) \mathbf{A}_i^{1/2}
+\end{aligned}
+$$
+where $\mathbf{R}_i(\boldsymbol{\alpha})$ is parameterized by a low-dimensional correlation vector $\boldsymbol{\alpha}$.
+
+## Example 1: Standard 2-level Exchangeable GEE (classic clustered GEE)
+
+Assume clusters indexed by $i=1,\cdots,I$ and subjects within cluster $j=1,\cdots,J_i$. Under an exchangeable working correlation,
+
+$$
+\begin{aligned}
+\operatorname{Corr}(Y_{ij}, Y_{ij'})
+&=
+\begin{cases}
+1, & j = j'\\
+\rho, & j \neq j'
+\end{cases}
+\end{aligned}
+$$
+Below, `id = "cluster"` identifies the clustering variable and `corstr = "nested-exchangeable"` specifies the exchangeable working correlation.
+
+```{r eval=FALSE}
+set.seed(1729)
+
+## Dimensions: i = 1,...,I clusters; j = 1,...,J subjects per cluster
+I <- 30                      # number of clusters
+J <- 40                      # cluster size (balanced)
+N <- I * J
+
+## Cluster index i and covariates x_{ij}
+mydat <- data.frame(
+  cluster = rep(seq_len(I), each = J),
+  x1   = rnorm(N),
+  x2   = rbinom(N, 1, 0.5)
+)
+
+## Random cluster effects b_i
+b_i <- rnorm(I, sd = 0.7)
+
+## Linear predictor eta_{ij}
+eta_ij <- -0.5 +
+  0.8 * mydat$x1 -
+  0.4 * mydat$x2 +
+  b_i[mydat$cluster]
+
+## Binary outcome Y_{ij}
+p_ij <- plogis(eta_ij)
+mydat$Y <- rbinom(N, size = 1, prob = p_ij)
+
+## Fit exchangeable GEE
+fit <- ngee(
+  formula   = Y ~ x1 + x2,
+  id         = "cluster",
+  dat        = mydat,
+  family     = "binomial",
+  corstr     = "nested-exchangeable",
+  se_adjust  = "unadjusted",     # or "FG"
+  optim      = "deterministic"   # or "stochastic"
+)
+
+fit
+```
+
+## Example 2: 3-level Nested Exchangeable Correlation
+
+Assume a 3-level hierarchy with observations indexed by $(i,j,k)$, where
+$i = 1,\cdots,I$ indexes outer clusters (e.g. schools), $j = 1,\cdots,J_i$ indexes inner clusters within outer cluster $i$ (e.g. classrooms),
+and $k = 1,\cdots,K_{ij}$ indexes individuals within inner cluster $(i,j)$ (e.g. students). Under a 3-level nested exchangeable working correlation,
+
+$$
+\begin{aligned}
+\operatorname{Corr}(Y_{ijk}, Y_{ij'k'})
+&=
+\begin{cases}
+1, & j = j',\ k = k' \\
+\rho_1, & j = j',\ k \neq k'\\
+\rho_2, & j \neq j'\\
+\end{cases}
+\end{aligned}
+$$
+Below, `id = c("cluster_i", "cluster_ij")` identifies the outer and inner clustering variables, and
+`corstr = "nested-exchangeable"` fits the nested exchangeable working correlation.
+
+```{r eval=FALSE}
+set.seed(1729)
+
+## Dimensions: i = 1,...,I outer clusters; j = 1,...,J inner clusters per outer cluster;
+##             k = 1,...,K individuals per inner cluster (balanced example)
+I <- 30     # number of outer clusters
+J <- 10     # number of inner clusters per outer cluster
+K <- 20     # individuals per inner cluster
+N <- I * J * K
+
+## Construct cluster indices (i, j) and covariates x_{ijk}
+mydat <- data.frame(
+  cluster_i  = rep(seq_len(I), each = J * K),                      # outer cluster index i
+  cluster_ij = rep(rep(seq_len(I * J), each = K)),                 # inner cluster (unique within i)
+  x1    = rnorm(N),
+  x2    = rbinom(N, 1, 0.5),
+  x3    = rnorm(N)
+)
+
+## Random effects: outer-cluster effect u_i and inner-cluster effect v_{ij}
+u_i  <- rnorm(I,     sd = 2)             
+v_ij <- rnorm(I * J, sd = 1)
+
+## Linear predictor eta_{ijk}
+eta_ijk <- -0.3 +
+  0.7 * mydat$x1 -
+  0.5 * mydat$x2 +
+  0.4 * mydat$x3 +
+  u_i[mydat$cluster_i] +
+  v_ij[mydat$cluster_ij]
+
+## Binary outcome Y_{ijk}
+p_ijk <- plogis(eta_ijk)
+mydat$Y <- rbinom(N, size = 1, prob = p_ijk)
+
+## Fit 3-level nested exchangeable GEE
+fit <- ngee(
+  formula    = Y ~ x1 + x2 + x3,
+  id         = c("cluster_i", "cluster_ij"),
+  dat        = mydat,
+  family     = "binomial",
+  corstr     = "nested-exchangeable",
+  se_adjust  = "unadjusted",    # or "FG"
+  optim      = "deterministic"  # or "stochastic"
+)
+
+fit
+```
+
+## Example 3 — Block-Exchangeable Correlation (Cohort Stepped-Wedge CRT)
+
+Observations are indexed by $(i,j,k)$, where
+$i = 1,\cdots,I$ indexes clusters, $j = 1,\cdots,J$ indexes time periods, and
+$k = 1,\cdots,K_i$ indexes individuals who are repeatedly measured across periods within cluster $i$.  
+Concrete examples of data structures following this indexing include:
+
+- **Cohort stepped-wedge cluster randomized trials**
+  - $i$ = cluster (e.g., hospital, clinic, community)
+  - $j$ = time period (step or calendar period)
+  - $k$ = individual subject repeatedly observed across periods within cluster $i$
+
+- **Matched employer–employee panel data**
+  - $i$ = firm or establishment
+  - $j$ = calendar year or quarter
+  - $k$ = worker observed longitudinally within firm $i$
+
+- **Student–school longitudinal panels**
+  - $i$ = school or district
+  - $j$ = academic year or grade level
+  - $k$ = student followed over time within school $i$
+
+- **Household and individual panel surveys**
+  - $i$ = household or geographic sampling unit
+  - $j$ = survey wave or interview year
+  - $k$ = individual respondent tracked longitudinally
+
+- **Provider–patient longitudinal healthcare data**
+  - $i$ = provider organization (hospital, clinic, practice)
+  - $j$ = time period (month, quarter, year)
+  - $k$ = patient repeatedly observed within provider $i$
+  
+Under a block-exchangeable working correlation (cluster-by-period blocks with within-person correlation),
+
+$$
+\begin{aligned}
+\operatorname{Corr}(Y_{ijk}, Y_{ij'k'})
+&=
+\begin{cases}
+1, & j = j',\ k = k' & \\
+\rho_0,  & j = j',\ k \neq k'& \text{(Same cluster, same period, different individual)}\\
+\rho_1, & j \neq j',\ k \neq k'& \text{(Same cluster, different period, different individual)}\\
+\rho_2, & j \neq j',\ k = k'& \text{(Same cluster, different period, same individual)}
+\end{cases}
+\end{aligned}
+$$
+
+Below, `id = c("cluster", "period")` specifies the cluster and period identifiers used to construct the block structure.
+The treatment indicator `tx_ij` follows a standard stepped-wedge rollout: each cluster switches from control to intervention at a cluster-specific crossover period.
+
+```{r eval=FALSE}
+set.seed(1729)
+
+## Dimensions: i = 1,...,I clusters; j = 1,...,J periods; k = 1,...,K individuals per cluster (cohort)
+I <- 20     # clusters
+J <- 4      # periods
+K <- 30     # individuals per cluster (cohort size)
+N <- I * J * K
+
+## Indexing variables (i, j, k)
+mydat <- data.frame(
+  cluster = rep(seq_len(I), each = J * K),                # cluster index i
+  period  = rep(rep(seq_len(J), each = K), times = I),    # period index j
+  id_ik   = rep(rep(seq_len(I * K), each = J)),           # individual id within cluster across periods
+  x1       = rnorm(N)
+)
+
+## Stepped-wedge rollout: crossover period for each cluster
+crossover_i <- sample(seq_len(J), I, replace = TRUE)
+
+## Treatment indicator tx_{ij}: 1 if j > crossover_i, else 0
+mydat$tx_ij <- as.integer(mydat$period > crossover_i[mydat$cluster])
+
+## Random effects: cluster, cluster-by-period, and individual
+u_i  <- rnorm(I,     sd = 0.5)            # cluster effect
+v_ij <- rnorm(I * J, sd = 0.4)            # cluster-period effect
+w_ik <- rnorm(I * K, sd = 0.6)            # individual effect (correlated across periods)
+
+## Period fixed effects beta_j
+beta_j <- 0.15/seq_len(J)
+
+## Linear predictor eta_{ijk}
+eta_ijk <- -0.8 +
+  beta_j[mydat$period] +
+  (-0.6) * mydat$tx_ij +                 # intervention effect
+  0.3 * mydat$x1 +
+  u_i[mydat$cluster] +
+  v_ij[(mydat$cluster - 1) * J + mydat$period] +
+  w_ik[mydat$id_ik]
+
+## Binary outcome Y_{ijk}
+p_ijk <- plogis(eta_ijk)
+mydat$outcome <- rbinom(N, size = 1, prob = p_ijk)
+
+## Fit block-exchangeable GEE for cohort stepped-wedge CRT
+fit <- ngee(
+  formula    = outcome ~ -1 + tx_ij + factor(period),
+  id         = c("cluster", "period"),
+  dat        = mydat,
+  family     = "binomial",
+  corstr     = "block-exchangeable",
+  se_adjust  = "unadjusted",        # or "FG"
+  optim      = "deterministic"  # or "stochastic"
+)
+
+fit
+```
+
+
+
+## Citation
+
+Chen T, Li F, Wang R. Network generalized estimating equations for complexly correlated data with applications to cluster randomized trials. Biostatistics. 2025;26(1):kxaf039.
