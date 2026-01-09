@@ -33,15 +33,23 @@ library(networkGEE)
 
 ## Model Formulation and Examples
 
-Let $Y_{ij}$ denote outcomes with marginal mean $$
+Let $Y_{ij}$ denote outcomes with marginal mean
+
+``` math
 \begin{aligned}
 \mu_{ij} = g^{-1}(\mathbf{X}_{ij} \boldsymbol{\beta})
 \end{aligned}
-$$ and working covariance $$
+```
+
+and working covariance
+
+``` math
 \begin{aligned}
 \text{Var}(\mathbf{Y}_i) = \mathbf{A}_i^{1/2} \mathbf{R}_i(\boldsymbol{\alpha}) \mathbf{A}_i^{1/2}
 \end{aligned}
-$$ where $\mathbf{R}_i(\boldsymbol{\alpha})$ is parameterized by a
+```
+
+where $\mathbf{R}_i(\boldsymbol{\alpha})$ is parameterized by a
 low-dimensional correlation vector $\boldsymbol{\alpha}$.
 
 ## Example 1: Standard 2-level Exchangeable GEE (classic clustered GEE)
@@ -49,16 +57,18 @@ low-dimensional correlation vector $\boldsymbol{\alpha}$.
 Assume clusters indexed by $i=1,\cdots,I$ and subjects within cluster
 $j=1,\cdots,J_i$. Under an exchangeable working correlation,
 
-$$
+``` math
 \begin{aligned}
-\operatorname{Corr}(Y_{ij}, Y_{ij'})
+\text{Corr}(Y_{ij}, Y_{ij'})
 &=
 \begin{cases}
 1, & j = j'\\
 \rho, & j \neq j'
 \end{cases}
 \end{aligned}
-$$ Below, `id = "cluster"` identifies the clustering variable and
+```
+
+Below, `id = "cluster"` identifies the clustering variable and
 `corstr = "nested-exchangeable"` specifies the exchangeable working
 correlation.
 
@@ -113,9 +123,9 @@ $j = 1,\cdots,J_i$ indexes inner clusters within outer cluster $i$
 inner cluster $(i,j)$ (e.g. students). Under a 3-level nested
 exchangeable working correlation,
 
-$$
+``` math
 \begin{aligned}
-\operatorname{Corr}(Y_{ijk}, Y_{ij'k'})
+\text{Corr}(Y_{ijk}, Y_{ij'k'})
 &=
 \begin{cases}
 1, & j = j',\ k = k' \\
@@ -123,7 +133,9 @@ $$
 \rho_2, & j \neq j'\\
 \end{cases}
 \end{aligned}
-$$ Below, `id = c("cluster_i", "cluster_ij")` identifies the outer and
+```
+
+Below, `id = c("cluster_i", "cluster_ij")` identifies the outer and
 inner clustering variables, and `corstr = "nested-exchangeable"` fits
 the nested exchangeable working correlation.
 
@@ -209,9 +221,9 @@ Concrete examples of data structures following this indexing include:
 Under a block-exchangeable working correlation (cluster-by-period blocks
 with within-person correlation),
 
-$$
+``` math
 \begin{aligned}
-\operatorname{Corr}(Y_{ijk}, Y_{ij'k'})
+\text{Corr}(Y_{ijk}, Y_{ij'k'})
 &=
 \begin{cases}
 1, & j = j',\ k = k' & \\
@@ -220,7 +232,7 @@ $$
 \rho_2, & j \neq j',\ k = k'& \text{(Same cluster, different period, same individual)}
 \end{cases}
 \end{aligned}
-$$
+```
 
 Below, `id = c("cluster", "period")` specifies the cluster and period
 identifiers used to construct the block structure. The treatment

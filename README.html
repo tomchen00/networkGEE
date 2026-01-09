@@ -666,33 +666,32 @@ optimization (<code>optim = &quot;stochastic&quot;</code>) backends</li>
 <h2 id="model-formulation-and-examples">Model Formulation and
 Examples</h2>
 <p>Let <span class="math inline">\(Y_{ij}\)</span> denote outcomes with
-marginal mean <span class="math display">\[
-\begin{aligned}
+marginal mean</p>
+<p><span class="math display">\[\begin{aligned}
 \mu_{ij} = g^{-1}(\mathbf{X}_{ij} \boldsymbol{\beta})
-\end{aligned}
-\]</span> and working covariance <span class="math display">\[
-\begin{aligned}
+\end{aligned}\]</span></p>
+<p>and working covariance</p>
+<p><span class="math display">\[\begin{aligned}
 \text{Var}(\mathbf{Y}_i) = \mathbf{A}_i^{1/2}
 \mathbf{R}_i(\boldsymbol{\alpha}) \mathbf{A}_i^{1/2}
-\end{aligned}
-\]</span> where <span class="math inline">\(\mathbf{R}_i(\boldsymbol{\alpha})\)</span> is
+\end{aligned}\]</span></p>
+<p>where <span class="math inline">\(\mathbf{R}_i(\boldsymbol{\alpha})\)</span> is
 parameterized by a low-dimensional correlation vector <span class="math inline">\(\boldsymbol{\alpha}\)</span>.</p>
 <h2 id="example-1-standard-2-level-exchangeable-gee-classic-clustered-gee">Example
 1: Standard 2-level Exchangeable GEE (classic clustered GEE)</h2>
 <p>Assume clusters indexed by <span class="math inline">\(i=1,\cdots,I\)</span> and subjects within cluster
 <span class="math inline">\(j=1,\cdots,J_i\)</span>. Under an
 exchangeable working correlation,</p>
-<p><span class="math display">\[
-\begin{aligned}
-\operatorname{Corr}(Y_{ij}, Y_{ij&#39;})
+<p><span class="math display">\[\begin{aligned}
+\text{Corr}(Y_{ij}, Y_{ij&#39;})
 &amp;=
 \begin{cases}
 1, &amp; j = j&#39;\\
 \rho, &amp; j \neq j&#39;
 \end{cases}
-\end{aligned}
-\]</span> Below, <code>id = &quot;cluster&quot;</code> identifies the clustering
-variable and <code>corstr = &quot;nested-exchangeable&quot;</code> specifies the
+\end{aligned}\]</span></p>
+<p>Below, <code>id = &quot;cluster&quot;</code> identifies the clustering variable
+and <code>corstr = &quot;nested-exchangeable&quot;</code> specifies the
 exchangeable working correlation.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1729</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
@@ -741,18 +740,17 @@ indexes inner clusters within outer cluster <span class="math inline">\(i\)</spa
 within inner cluster <span class="math inline">\((i,j)\)</span>
 (e.g. students). Under a 3-level nested exchangeable working
 correlation,</p>
-<p><span class="math display">\[
-\begin{aligned}
-\operatorname{Corr}(Y_{ijk}, Y_{ij&#39;k&#39;})
+<p><span class="math display">\[\begin{aligned}
+\text{Corr}(Y_{ijk}, Y_{ij&#39;k&#39;})
 &amp;=
 \begin{cases}
 1, &amp; j = j&#39;,\ k = k&#39; \\
 \rho_1, &amp; j = j&#39;,\ k \neq k&#39;\\
 \rho_2, &amp; j \neq j&#39;\\
 \end{cases}
-\end{aligned}
-\]</span> Below, <code>id = c(&quot;cluster_i&quot;, &quot;cluster_ij&quot;)</code>
-identifies the outer and inner clustering variables, and
+\end{aligned}\]</span></p>
+<p>Below, <code>id = c(&quot;cluster_i&quot;, &quot;cluster_ij&quot;)</code> identifies the
+outer and inner clustering variables, and
 <code>corstr = &quot;nested-exchangeable&quot;</code> fits the nested exchangeable
 working correlation.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1729</span>)</span>
@@ -856,9 +854,8 @@ within provider <span class="math inline">\(i\)</span></li>
 </ul>
 <p>Under a block-exchangeable working correlation (cluster-by-period
 blocks with within-person correlation),</p>
-<p><span class="math display">\[
-\begin{aligned}
-\operatorname{Corr}(Y_{ijk}, Y_{ij&#39;k&#39;})
+<p><span class="math display">\[\begin{aligned}
+\text{Corr}(Y_{ijk}, Y_{ij&#39;k&#39;})
 &amp;=
 \begin{cases}
 1, &amp; j = j&#39;,\ k = k&#39; &amp; \\
@@ -869,8 +866,7 @@ different period, different individual)}\\
 \rho_2, &amp; j \neq j&#39;,\ k = k&#39;&amp; \text{(Same cluster,
 different period, same individual)}
 \end{cases}
-\end{aligned}
-\]</span></p>
+\end{aligned}\]</span></p>
 <p>Below, <code>id = c(&quot;cluster&quot;, &quot;period&quot;)</code> specifies the cluster
 and period identifiers used to construct the block structure. The
 treatment indicator <code>tx_ij</code> follows a standard stepped-wedge
