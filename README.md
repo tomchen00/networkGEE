@@ -188,7 +188,7 @@ fit <- ngee(
 fit
 ```
 
-## Example 3 — Block-Exchangeable Correlation (Cohort Stepped-Wedge CRT)
+## Example 3: Block-Exchangeable Correlation
 
 Observations are indexed by $(i,j,k)$, where $i = 1,\cdots,I$ indexes
 clusters, $j = 1,\cdots,J$ indexes time periods, and $k = 1,\cdots,K_i$
