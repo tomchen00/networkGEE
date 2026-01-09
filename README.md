@@ -52,7 +52,7 @@ and working covariance
 where $\mathbf{R}_i(\boldsymbol{\alpha})$ is parameterized by a
 low-dimensional correlation vector $\boldsymbol{\alpha}$.
 
-## Example 1: Standard 2-level Exchangeable GEE (classic clustered GEE)
+## Example 1: 2-level Nested Exchangeable GEE (“Simple Exchangeable”)
 
 Assume clusters indexed by $i=1,\cdots,I$ and subjects within cluster
 $j=1,\cdots,J_i$. Under an exchangeable working correlation,
@@ -114,7 +114,7 @@ fit <- ngee(
 fit
 ```
 
-## Example 2: 3-level Nested Exchangeable Correlation
+## Example 2: 3-level Nested Exchangeable GEE
 
 Assume a 3-level hierarchy with observations indexed by $(i,j,k)$, where
 $i = 1,\cdots,I$ indexes outer clusters (e.g. schools),
@@ -188,7 +188,7 @@ fit <- ngee(
 fit
 ```
 
-## Example 3: Block-Exchangeable Correlation
+## Example 3: Block-Exchangeable GEE
 
 Observations are indexed by $(i,j,k)$, where $i = 1,\cdots,I$ indexes
 clusters, $j = 1,\cdots,J$ indexes time periods, and $k = 1,\cdots,K_i$
@@ -297,6 +297,20 @@ fit <- ngee(
 
 fit
 ```
+
+## Computational Benchmarks for 2-level Exchangeable GEE
+
+We benchmarked wall-clock runtime for fitting a 2-level exchangeable GEE
+with binary outcomes across $I \in \{10,30,100\}$ clusters and balanced
+cluster sizes $J \in \{10,30,100\}$.
+
+Compared methods: - `networkGEE::ngee()` (deterministic) -
+`geepack::geese()` - `gee::gee()` - `geeM::geem()`
+
+Hardware / software: Microsoft Windows 10 Pro (Build 19045), AMD Ryzen 9
+3900X (12 cores / 24 threads, ~3.8 GHz), 32 GB RAM.
+
+![](benchmarks/figures/timing_2level_exchangeable.png)
 
 ## Citation
 
