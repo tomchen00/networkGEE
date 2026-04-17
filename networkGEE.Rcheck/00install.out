@@ -1,0 +1,33 @@
+* installing *source* package 'networkGEE' ...
+** this is package 'networkGEE' version '0.1.1'
+** using staged installation
+** libs
+using C++ compiler: 'G__~1.EXE (GCC) 14.2.0'
+using C++17
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.0/include" -DNDEBUG  -I'C:/Users/tomch/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/tomch/AppData/Local/R/win-library/4.5/RcppArmadillo/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c RcppExports.cpp -o RcppExports.o
+In file included from C:/Users/tomch/AppData/Local/R/win-library/4.5/RcppArmadillo/include/current/armadillo:26,
+                 from C:/Users/tomch/AppData/Local/R/win-library/4.5/RcppArmadillo/include/RcppArmadillo/interface/RcppArmadilloForward.h:57,
+                 from C:/Users/tomch/AppData/Local/R/win-library/4.5/RcppArmadillo/include/RcppArmadillo.h:32,
+                 from RcppExports.cpp:4:
+C:/Users/tomch/AppData/Local/R/win-library/4.5/RcppArmadillo/include/current/armadillo_bits/config.hpp:373:72: note: '#pragma message: NOTE: option ARMA_CRIPPLED_LAPACK is not supported'
+  373 |   #pragma message ("NOTE: option ARMA_CRIPPLED_LAPACK is not supported")
+      |                                                                        ^
+g++  -std=gnu++17 -I"C:/PROGRA~1/R/R-45~1.0/include" -DNDEBUG  -I'C:/Users/tomch/AppData/Local/R/win-library/4.5/Rcpp/include' -I'C:/Users/tomch/AppData/Local/R/win-library/4.5/RcppArmadillo/include'   -I"C:/rtools45/x86_64-w64-mingw32.static.posix/include"      -O2 -Wall  -mfpmath=sse -msse2 -mstackrealign    -c ngee.cpp -o ngee.o
+In file included from C:/Users/tomch/AppData/Local/R/win-library/4.5/RcppArmadillo/include/current/armadillo:26,
+                 from C:/Users/tomch/AppData/Local/R/win-library/4.5/RcppArmadillo/include/RcppArmadillo/interface/RcppArmadilloForward.h:57,
+                 from C:/Users/tomch/AppData/Local/R/win-library/4.5/RcppArmadillo/include/RcppArmadillo.h:32,
+                 from ngee.cpp:52:
+C:/Users/tomch/AppData/Local/R/win-library/4.5/RcppArmadillo/include/current/armadillo_bits/config.hpp:373:72: note: '#pragma message: NOTE: option ARMA_CRIPPLED_LAPACK is not supported'
+  373 |   #pragma message ("NOTE: option ARMA_CRIPPLED_LAPACK is not supported")
+      |                                                                        ^
+g++ -shared -s -static-libgcc -o networkGEE.dll tmp.def RcppExports.o ngee.o -LC:/PROGRA~1/R/R-45~1.0/bin/x64 -lRlapack -LC:/PROGRA~1/R/R-45~1.0/bin/x64 -lRblas -lgfortran -lquadmath -LC:/rtools45/x86_64-w64-mingw32.static.posix/lib/x64 -LC:/rtools45/x86_64-w64-mingw32.static.posix/lib -LC:/PROGRA~1/R/R-45~1.0/bin/x64 -lR
+installing to C:/Users/tomch/HARVAR~1/TOMCHE~1/MR-GEE/NETWOR~1/NETWOR~1/NETWOR~1.RCH/00LOCK-NETWOR~1/00new/networkGEE/libs/x64
+** R
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (networkGEE)
